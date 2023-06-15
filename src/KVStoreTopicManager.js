@@ -41,20 +41,20 @@ class KVStoreTopicManager {
             script: output.script.toHex(),
             fieldFormat: 'buffer'
           })
-          
-          // Use ECDSA to verify signature
-          const hasValidSignature = bsv.crypto.ECDSA.verify(
-            bsv.crypto.Hash.sha256(Buffer.concat(result.fields)),
-            bsv.crypto.Signature.fromString(result.signature),
-            bsv.PublicKey.fromString(result.lockingPublicKey)
-          )
-          if (!hasValidSignature) {
-            const e = new Error('Invalid Signature')
-            e.code = 'ERR_INVALID_SIGNATURE'
+
+          if (result.fields.length !== 2) {
+            const e = new Error(`KVStore tokens have two PushDrop fields, but this token has ${result.fields.length} fields!`)
+            e.code = 'ERR_WRONG_NUMBER_OF_FIELDS'
             throw e
           }
-          outputs.push(i)
 
+          if (result.fields[0].byteLength !== 32) {
+             const e = new Error(`KVStore tokens have 32-byte protected keys in their first PushDrop field, but the key for this token has ${result.fields[0].byteLength} bytes!`)
+            e.code = 'ERR_INVALID_KEY_LENGTH'
+            throw e
+          }
+
+          outputs.push(i)
         } catch (error) {
           // Probably not a PushDrop token so do nothing
           console.log(error)
