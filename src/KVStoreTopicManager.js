@@ -17,9 +17,9 @@ class KVStoreTopicManager {
    * @returns
    */
 
-  identifyAdmissibleOutputs ({ parsedTransaction }) {
+  identifyAdmissibleOutputs ({ previousUTXOs, parsedTransaction }) {
     try {
-      const outputs = []
+      const outputsToAdmit = []
       
       // Validate params
       if (!Array.isArray(parsedTransaction.inputs) || parsedTransaction.inputs.length < 1) {
@@ -54,13 +54,13 @@ class KVStoreTopicManager {
             throw e
           }
 
-          outputs.push(i)
+          outputsToAdmit.push(i)
         } catch (error) {
           // Probably not a PushDrop token so do nothing
           console.log(error)
         }
       }
-      if (outputs.length === 0) {
+      if (outputsToAdmit.length === 0) {
         const e = new Error(
           'This transaction does not publish a valid TSP Advertisement descriptor!'
         )
@@ -68,8 +68,12 @@ class KVStoreTopicManager {
         throw e
       }
 
-      // Returns an array of output numbers
-      return outputs
+      // Returns an array of vouts admitted
+      // And previousOutputsRetained (all in this case)
+      return {
+        outputsToAdmit,
+        outputsToRetain: previousUTXOs.map(x => x.id)
+      }
     } catch (error) {
       return []
     }
